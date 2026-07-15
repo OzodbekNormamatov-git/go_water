@@ -16,6 +16,7 @@ from Domain.models.ledger import LedgerAccount, LedgerEntry, LedgerKind, LedgerS
 from Domain.models.operator import Operator
 from Domain.models.operator_call import CallOutcome, OperatorCall
 from Domain.models.order import Order, OrderItem
+from Domain.models.promoter import Promoter, PromoterRedemption
 from Domain.models.reminder import Reminder
 from Domain.models.user import User
 from Domain.models.user_phone import UserPhone
@@ -48,4 +49,6 @@ __all__ = [
     "Operator",
     "OperatorCall",
     "CallOutcome",
+    "Promoter",
+    "PromoterRedemption",
 ]

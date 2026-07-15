@@ -17,7 +17,12 @@ from decimal import Decimal
 from sqlalchemy import Boolean, Integer, Numeric
 from sqlalchemy.orm import Mapped, mapped_column
 
-from Domain.constants import DEFAULT_CHURN_AFTER_DAYS, DEFAULT_REMINDER_LEAD_DAYS
+from Domain.constants import (
+    DEFAULT_CHURN_AFTER_DAYS,
+    DEFAULT_PROMOTER_BONUS_PER_ORDER,
+    DEFAULT_PROMOTER_BONUS_WINDOW_DAYS,
+    DEFAULT_REMINDER_LEAD_DAYS,
+)
 from Domain.models.base import Base, TimestampMixin
 
 
@@ -59,4 +64,26 @@ class AppSettings(Base, TimestampMixin):
     # (operator "yo'qotilgan mijozlar" ro'yxati). Aqlli eslatma segmentatsiyasi.
     reorder_churn_after_days: Mapped[int] = mapped_column(
         Integer, nullable=False, default=DEFAULT_CHURN_AFTER_DAYS,
+    )
+
+    # ---- Promouter (uyma-uy ishchilar) config ----
+    # Butun promokod dasturini yoqish/o'chirish. O'chirilganda:
+    #   * yangi promokodlar QABUL QILINMAYDI (`promoter_program_disabled`)
+    #   * yangi zakazlarga bonus yozilmaydi (`promoter_bonus_amount = 0`)
+    #   * mavjud bog'lanishlar va o'tmish KPI'si SAQLANADI (tarix o'zgarmaydi)
+    promoter_program_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true",
+    )
+    # Bonus davri ichidagi har YETKAZILGAN zakaz uchun promouterga yoziladigan
+    # summa (so'm). Zakaz yaratilganda `orders.promoter_bonus_amount` ga
+    # muhrlanadi — bu yerdagi keyingi o'zgarish o'tmishga ta'sir qilmaydi.
+    promoter_bonus_per_order: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), nullable=False,
+        default=Decimal(DEFAULT_PROMOTER_BONUS_PER_ORDER), server_default="0",
+    )
+    # Promokod kiritilgandan keyin bonus necha kun davom etadi.
+    # Kiritilgan paytda `promoter_redemptions.bonus_window_ends_at` ga muhrlanadi.
+    promoter_bonus_window_days: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=DEFAULT_PROMOTER_BONUS_WINDOW_DAYS,
+        server_default=str(DEFAULT_PROMOTER_BONUS_WINDOW_DAYS),
     )

@@ -91,6 +91,37 @@ DEFAULT_CHURN_AFTER_DAYS: Final[int] = 14
 # Operator "keyinroq chaqirish" (snooze) maksimal muddati.
 MAX_REORDER_SNOOZE_DAYS: Final[int] = 90
 
+# ---------------------- Promouterlar (uyma-uy ishchilar) ----------------------
+# Promokod formati. Ikkita ALOHIDA alifbo — ataylab:
+#
+#   PROMO_CODE_ALLOWED  — QABUL qilinadigan belgilar (validatsiya). To'liq
+#     A-Z0-9: admin xohlagan mazmunli kodni bera olsin ("OLIM01", "ALI1").
+#     Cheklash bu yerda faqat bezovta qilardi — kodni admin o'zi tanlaydi.
+#
+#   PROMO_CODE_ALPHABET — AVTOMATIK yaratishda ishlatiladigan tor to'plam.
+#     Chalkashadigan belgilar chiqarilgan: O↔0 va I↔1↔L. Sabab: avtomatik kod
+#     og'zaki aytiladi/vizitkadan ko'chiriladi, va "0 mi, O mi?" degan savol
+#     "kod ishlamayapti" shikoyatlarining eng keng tarqalgan sababi.
+PROMO_CODE_ALLOWED: Final[str] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+PROMO_CODE_ALPHABET: Final[str] = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+PROMO_CODE_MIN_LENGTH: Final[int] = 4
+PROMO_CODE_MAX_LENGTH: Final[int] = 16
+# Admin qo'lda kod bermasa — shu uzunlikda avtomatik generatsiya qilinadi.
+PROMO_CODE_GENERATED_LENGTH: Final[int] = 6
+
+# Bonus (KPI) default sozlamalari — `AppSettings` birinchi yaratilganda.
+# Live qiymatlar admin Mini App "Sozlamalar" bo'limidan boshqariladi.
+# Default 0: dastur yoqilgan bo'lsa-da, admin summani ataylab belgilamaguncha
+# hech kimga pul yozilmaydi (tasodifiy xarajatdan himoya).
+DEFAULT_PROMOTER_BONUS_PER_ORDER: Final[int] = 0
+MAX_PROMOTER_BONUS_PER_ORDER: Final[int] = 1_000_000
+# Promokod kiritilgandan keyin necha kun davomida mijozning zakazlari
+# promouterga bonus keltiradi. Davr `promoter_redemptions.bonus_window_ends_at`
+# ga MUHRLANADI (keyingi sozlama o'zgarishi eskilarga ta'sir qilmaydi).
+DEFAULT_PROMOTER_BONUS_WINDOW_DAYS: Final[int] = 90
+MIN_PROMOTER_BONUS_WINDOW_DAYS: Final[int] = 1
+MAX_PROMOTER_BONUS_WINDOW_DAYS: Final[int] = 3650
+
 # ---------------------- Rasxodlar (expenses) ----------------------
 # Doimiy rasxod materializatsiyasi eng ko'pi shuncha kun ORQAGA qaraydi —
 # juda eski start_date bilan ming-minglab qator yaratilib ketmasin (himoya).

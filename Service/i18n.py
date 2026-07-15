@@ -115,6 +115,21 @@ _MESSAGES: Dict[str, Dict[str, str]] = {
         "expense_dates_invalid":          "Tugash sanasi boshlanish sanasidan oldin bo'la olmaydi.",
         # Operatorlar (admin bot)
         "operator_not_found":             "Operator topilmadi.",
+        # Promouterlar (uyma-uy ishchilar) — mijoz tomoni
+        "promo_code_required":            "Promokodni kiriting.",
+        "promo_code_invalid":             "Bunday promokod topilmadi yoki u endi faol emas.",
+        "promo_code_already_used":        "Bu hisobda promokod allaqachon kiritilgan.",
+        "promo_code_customer_has_orders": "Promokod faqat hali birorta buyurtma bermagan mijozlar uchun amal qiladi.",
+        "promo_code_no_address":          "Avval kamida bitta manzilni saqlang (masalan, \"Uy\"), keyin promokodni kiriting.",
+        "promoter_program_disabled":      "Promokod dasturi hozir o'chirilgan.",
+        # Promouterlar — admin tomoni
+        "promoter_not_found":             "Promouter topilmadi.",
+        "promoter_code_taken":            "\"{code}\" kodi allaqachon band. Boshqa kod tanlang.",
+        "promoter_code_length":           "Promokod {min} va {max} ta belgi oralig'ida bo'lishi shart.",
+        "promoter_code_charset":          "Promokodda ruxsat etilmagan belgi: {chars}. Faqat lotin harflari (A-Z) va raqamlar (0-9) mumkin.",
+        "promoter_code_generation_failed": "Kod yaratib bo'lmadi. Qayta urinib ko'ring yoki kodni qo'lda kiriting.",
+        "settings_promoter_bonus_out_of_range":  "Promouter bonusi 0 va {max} so'm oralig'ida bo'lishi shart.",
+        "settings_promoter_window_out_of_range": "Bonus davri {min} va {max} kun oralig'ida bo'lishi shart.",
         # Aqlli eslatma (operator qo'ng'iroqlari)
         "call_outcome_invalid":           "Qo'ng'iroq natijasi noto'g'ri.",
         "snooze_too_long":                "Keyinga surish eng ko'pi {max} kun bo'lishi mumkin.",

@@ -19,6 +19,12 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
 from Data.unit_of_work import UnitOfWork
+from Domain.constants import (
+    DEFAULT_PROMOTER_BONUS_WINDOW_DAYS,
+    MAX_PROMOTER_BONUS_PER_ORDER,
+    MAX_PROMOTER_BONUS_WINDOW_DAYS,
+    MIN_PROMOTER_BONUS_WINDOW_DAYS,
+)
 from Domain.models.app_settings import AppSettings
 from Service.exceptions import ValidationError
 
@@ -38,6 +44,14 @@ class RemindersConfig:
     lead_days: int
 
 
+@dataclass(slots=True)
+class PromoterConfig:
+    """Promouter (uyma-uy ishchilar) dasturi sozlamasi (sof DTO)."""
+    enabled: bool
+    bonus_per_order: Decimal
+    bonus_window_days: int
+
+
 def _to_config(s: AppSettings) -> CashbackConfig:
     return CashbackConfig(
         enabled=bool(s.cashback_enabled),
@@ -50,6 +64,16 @@ def _to_reminders(s: AppSettings) -> RemindersConfig:
     return RemindersConfig(
         enabled=bool(s.reminders_enabled),
         lead_days=int(s.reminder_lead_days or 0),
+    )
+
+
+def _to_promoter(s: AppSettings) -> PromoterConfig:
+    return PromoterConfig(
+        enabled=bool(s.promoter_program_enabled),
+        bonus_per_order=Decimal(s.promoter_bonus_per_order or 0),
+        bonus_window_days=int(
+            s.promoter_bonus_window_days or DEFAULT_PROMOTER_BONUS_WINDOW_DAYS
+        ),
     )
 
 
@@ -139,3 +163,63 @@ class SettingsService:
                 s.reminder_lead_days = int(lead_days)
             await uow.settings.add(s)
             return _to_reminders(s)
+
+    # ---------------------- Promouter (uyma-uy ishchilar) ----------------------
+
+    async def get_promoter_config(self) -> PromoterConfig:
+        async with UnitOfWork(self._sf) as uow:
+            s = await uow.settings.get_or_create()
+            return _to_promoter(s)
+
+    async def update_promoter(
+        self, *, enabled: Optional[bool] = None,
+        bonus_per_order: Optional[Decimal] = None,
+        bonus_window_days: Optional[int] = None,
+    ) -> PromoterConfig:
+        """Promouter dasturi sozlamasini atomik yangilaydi (PATCH semantikasi).
+
+        DIQQAT — bu yerdagi o'zgarish ORQAGA QARAB ta'sir qilmaydi:
+          * `bonus_per_order` — har zakazga YARATILGANDA muhrlanadi
+            (`orders.promoter_bonus_amount`), o'tmish hisobotlari o'zgarmaydi.
+          * `bonus_window_days` — kod KIRITILGANDA muhrlanadi
+            (`promoter_redemptions.bonus_window_ends_at`), mavjud
+            bog'lanishlarning muddati o'zgarmaydi.
+        """
+        if bonus_per_order is not None:
+            b = Decimal(str(bonus_per_order))
+            if b < 0 or b > MAX_PROMOTER_BONUS_PER_ORDER:
+                raise ValidationError(
+                    "settings_promoter_bonus_out_of_range",
+                    context={"max": MAX_PROMOTER_BONUS_PER_ORDER},
+                )
+        if bonus_window_days is not None:
+            try:
+                d = int(bonus_window_days)
+            except (TypeError, ValueError):
+                raise ValidationError(
+                    "settings_promoter_window_out_of_range",
+                    context={
+                        "min": MIN_PROMOTER_BONUS_WINDOW_DAYS,
+                        "max": MAX_PROMOTER_BONUS_WINDOW_DAYS,
+                    },
+                )
+            if d < MIN_PROMOTER_BONUS_WINDOW_DAYS or d > MAX_PROMOTER_BONUS_WINDOW_DAYS:
+                raise ValidationError(
+                    "settings_promoter_window_out_of_range",
+                    context={
+                        "min": MIN_PROMOTER_BONUS_WINDOW_DAYS,
+                        "max": MAX_PROMOTER_BONUS_WINDOW_DAYS,
+                    },
+                )
+        async with UnitOfWork(self._sf) as uow:
+            s = await uow.settings.get_for_update()
+            if enabled is not None:
+                s.promoter_program_enabled = bool(enabled)
+            if bonus_per_order is not None:
+                s.promoter_bonus_per_order = Decimal(
+                    str(bonus_per_order)
+                ).quantize(Decimal("0.01"))
+            if bonus_window_days is not None:
+                s.promoter_bonus_window_days = int(bonus_window_days)
+            await uow.settings.add(s)
+            return _to_promoter(s)

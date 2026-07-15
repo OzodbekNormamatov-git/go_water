@@ -36,6 +36,7 @@ from Service.ledger_service import (
 )
 from Service.order_display import order_display_number
 from Service.phone import normalize_phone_lenient
+from Service.promoter_service import resolve_order_attribution
 
 
 def _local_tz():
@@ -279,6 +280,17 @@ class OrderService:
             today_local = datetime.now(_local_tz()).date()
             daily_number = await uow.orders.next_daily_number(today_local)
 
+            # Promouter atributsiyasi — mijozni uyma-uy yurib jalb qilgan ishchi.
+            # Uchala qiymat ham zakazga MUHRLANADI (`cashback_earned` patterni):
+            #   * promoter_id/code — bog'lanish bor bo'lsa DOIM (ishchi ishdan
+            #     ketgan yoki bonus davri tugagan bo'lsa ham) — tahlil buzilmasin.
+            #   * bonus — faqat dastur yoqiq + ishchi aktiv + davr tugamagan bo'lsa.
+            # Mijoz qatori yuqorida LOCK qilingan, shuning uchun "kod kiritish"
+            # bilan race yo'q (PromoterService.redeem ham shu qatorni lock qiladi).
+            promoter_id, promoter_code, promoter_bonus = await resolve_order_attribution(
+                uow, user.id,
+            )
+
             order = Order(
                 customer_id=user.id,
                 status=OrderStatus.NEW,
@@ -300,6 +312,9 @@ class OrderService:
                 idempotency_key=data.idempotency_key,
                 created_by_operator_id=data.created_by_operator_id,
                 payment_method=payment_method.value,
+                promoter_id=promoter_id,
+                promoter_code=promoter_code,
+                promoter_bonus_amount=promoter_bonus,
                 items=order_items,
             )
             await uow.orders.add(order)

@@ -15,6 +15,10 @@ from Data.repositories.ledger_repository import LedgerRepository
 from Data.repositories.operator_call_repository import OperatorCallRepository
 from Data.repositories.operator_repository import OperatorRepository
 from Data.repositories.order_repository import OrderRepository
+from Data.repositories.promoter_repository import (
+    PromoterRedemptionRepository,
+    PromoterRepository,
+)
 from Data.repositories.reminder_repository import ReminderRepository
 from Data.repositories.settings_repository import SettingsRepository
 from Data.repositories.user_repository import UserRepository
@@ -39,6 +43,8 @@ class UnitOfWork:
     expenses: ExpenseRepository
     operator_calls: OperatorCallRepository
     operators: OperatorRepository
+    promoters: PromoterRepository
+    promoter_redemptions: PromoterRedemptionRepository
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._session_factory = session_factory
@@ -59,6 +65,8 @@ class UnitOfWork:
         self.expenses = ExpenseRepository(self._session)
         self.operator_calls = OperatorCallRepository(self._session)
         self.operators = OperatorRepository(self._session)
+        self.promoters = PromoterRepository(self._session)
+        self.promoter_redemptions = PromoterRedemptionRepository(self._session)
         return self
 
     async def __aexit__(

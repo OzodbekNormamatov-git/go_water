@@ -33,6 +33,7 @@ from webapp.admin import routes_broadcasts as admin_broadcasts_routes
 from webapp.admin import routes_expenses as admin_expenses_routes
 from webapp.admin import routes_finance as admin_finance_routes
 from webapp.admin import routes_operator as admin_operator_routes
+from webapp.admin import routes_promoters as admin_promoters_routes
 from webapp.admin import routes_reorder as admin_reorder_routes
 from webapp.admin import routes_resources as admin_resources
 from webapp.admin import routes_settings as admin_settings_routes
@@ -47,6 +48,7 @@ from webapp.routes import geocode as geocode_routes
 from webapp.routes import me as me_routes
 from webapp.routes import orders as order_routes
 from webapp.routes import products as product_routes
+from webapp.routes import promo as promo_routes
 
 log = logging.getLogger(__name__)
 
@@ -237,6 +239,7 @@ def create_app(*, container: AppContainer, cors_origins: List[str]) -> FastAPI:
     app.include_router(cart_routes.router)
     app.include_router(geocode_routes.router)
     app.include_router(courier_routes.router)
+    app.include_router(promo_routes.router)
     # Debug — frontend loglar terminalda ko'rinsin. Production'da o'chiriladi
     # (env DEBUG_FRONTEND_LOGS=false default). Frontend baribir 404'ga toqat qiladi.
     from config import get_settings as _get_settings
@@ -253,6 +256,7 @@ def create_app(*, container: AppContainer, cors_origins: List[str]) -> FastAPI:
     app.include_router(admin_settings_routes.router)
     app.include_router(admin_broadcasts_routes.router)
     app.include_router(admin_operator_routes.router)
+    app.include_router(admin_promoters_routes.router)
     app.include_router(admin_resources.orders_router)
     app.include_router(admin_resources.products_router)
     app.include_router(admin_resources.couriers_router)

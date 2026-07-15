@@ -96,6 +96,37 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
         BigInteger, nullable=True, index=True,
     )
 
+    # ---------------------- Promouter atributsiyasi ----------------------
+    # Mijozni uyma-uy yurib jalb qilgan ishchi (`promoter_redemptions` orqali).
+    # NULL = mijozda promokod bog'lanishi yo'q (oddiy mijoz).
+    #
+    # ATRIBUTSIYA va BONUS ATAYLAB AJRATILGAN:
+    #   * `promoter_id` — "bu mijozni kim olib kelgan" — ABADIY fakt. Promouter
+    #     ishdan ketsa yoki bonus davri tugasa HAM yozilaveradi (tahlil buzilmasin).
+    #   * `promoter_bonus_amount` — pul. Faqat dastur yoqiq + promouter aktiv +
+    #     davr tugamagan bo'lsa > 0 bo'ladi; aks holda 0.
+    # Shu sababli "davri tugagan / ishdan ketgan promouter" holati bu jadvalda
+    # HECH QANDAY muammo tug'dirmaydi — shunchaki bonusi 0 bo'ladi.
+    #
+    # SET NULL: promouter qatori majburan hard-delete qilinsa ham zakaz o'chmaydi
+    # (amalda bu sodir bo'lmaydi — promouterlar arxivlanadi va
+    # `promoter_redemptions.promoter_id` RESTRICT bilan himoyalangan).
+    promoter_id: Mapped[int | None] = mapped_column(
+        ForeignKey("promoters.id", ondelete="SET NULL"), nullable=True, index=True,
+    )
+    # Promokod SNAPSHOT'i (`OrderItem.food_name` patterni) — oxirgi himoya:
+    # promouter qatori yo'qolsa va `promoter_id` NULL bo'lib qolsa ham, zakaz
+    # qaysi kod orqali kelganini o'zi aytib turadi.
+    promoter_code: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="", server_default="",
+    )
+    # Shu zakaz uchun promouterga tegishli bonus — YARATILGANDA muhrlanadi
+    # (`cashback_earned` patterni). Admin bonusni keyin o'zgartirsa, o'tmishdagi
+    # hisobotlar o'zgarmaydi. Faqat DELIVERED bo'lganda haqiqiy hisoblanadi.
+    promoter_bonus_amount: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), nullable=False, default=Decimal("0.00"), server_default="0",
+    )
+
     # Kuryerlar guruhidagi xabarning telegram message_id si — claim paytida tahrirlanadi
     group_message_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     # Biriktirilgan kuryerga shaxsiy DM dagi xabar id si — har transitsiyada tahrirlanadi

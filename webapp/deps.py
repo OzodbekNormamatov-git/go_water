@@ -25,6 +25,7 @@ from Service.ledger_service import LedgerService
 from Service.notification_service import NotificationService
 from Service.operator_service import OperatorService
 from Service.order_service import OrderService
+from Service.promoter_service import PromoterService
 from Service.settings_service import SettingsService
 from Service.user_service import UserService
 from webapp.auth import InitDataError, TelegramUser, verify_init_data
@@ -52,6 +53,7 @@ class AppContainer:
     expense_service: ExpenseService
     lifecycle_service: CustomerLifecycleService
     operator_service: OperatorService
+    promoter_service: PromoterService
     customer_bot_token: str
     admin_bot_token: str           # Admin Mini App initData verification uchun
     courier_bot_token: str         # Kuryer Mini App initData verification uchun
@@ -138,6 +140,10 @@ def get_lifecycle_service(c: AppContainer = Depends(_container)) -> CustomerLife
 
 def get_operator_service(c: AppContainer = Depends(_container)) -> OperatorService:
     return c.operator_service
+
+
+def get_promoter_service(c: AppContainer = Depends(_container)) -> PromoterService:
+    return c.promoter_service
 
 
 # ---------------------- Telegram Mini App auth ----------------------

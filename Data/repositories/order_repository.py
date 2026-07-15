@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Optional, Sequence
 
 from sqlalchemy import and_, case as sa_case_when, func, select
@@ -518,6 +519,26 @@ class OrderRepository(BaseRepository[Order]):
         )
         return int(res.scalar_one() or 0)
 
+    async def has_any_order(self, customer_id: int) -> bool:
+        """Mijoz UMRIDA birorta buyurtma berganmi — QAT'IY tekshiruv.
+
+        Promokod shartining asosi ("faqat hali zakaz bermagan mijoz").
+
+        `count_by_customer` DAN FARQI — ataylab:
+          * arxivlangan (`deleted_at`) zakazlar HAM sanaladi
+          * CANCELLED zakazlar HAM sanaladi
+        Sabab: aks holda zakazni arxivlab yoki bekor qilib, mijozni sun'iy
+        "yangi" holatga qaytarish va promokod bonusini qayta olish yo'li
+        ochilardi. "Zakaz bergan" — qaytarib bo'lmaydigan tarixiy fakt.
+
+        EXISTS semantikasi (`LIMIT 1`) — COUNT dan tez, chunki bizga faqat
+        "bormi yo'qmi" kerak.
+        """
+        res = await self._session.execute(
+            select(Order.id).where(Order.customer_id == customer_id).limit(1)
+        )
+        return res.scalar_one_or_none() is not None
+
     async def count_delivered_by_courier(
         self,
         courier_id: int,
@@ -565,6 +586,45 @@ class OrderRepository(BaseRepository[Order]):
         return {
             int(row[0]): (int(row[1] or 0), int(row[2] or 0), int(row[3] or 0))
             for row in res.all()
+        }
+
+    async def stats_per_promoter(
+        self,
+        promoter_ids: Sequence[int],
+        *,
+        since: Optional[datetime] = None,
+    ) -> dict[int, tuple[int, Decimal]]:
+        """N ta promouter uchun (DELIVERED zakazlar soni, jami bonus) — bitta query.
+
+        `stats_per_courier` patterni: N+1 emas, yagona GROUP BY.
+
+        TARIXIY hisobot — promouterning `is_active` / `deleted_at` holati bu yerda
+        FILTRLANMAYDI (ataylab). Ishdan ketgan yoki to'xtatilgan ishchining
+        o'tmishda ishlab bergan natijasi hisobotda ko'rinib turishi SHART, aks
+        holda oylik yakunlar orqaga qarab o'zgarib ketardi.
+
+        Bonus faqat `promoter_bonus_amount` yig'indisidan olinadi — u zakaz
+        YARATILGANDA muhrlangan (davr tugagan / ishchi noaktiv bo'lsa 0 yozilgan).
+        Shuning uchun bu yerda davr yoki aktivlik QAYTA tekshirilmaydi — hisob
+        har doim o'sha paytdagi kelishuvni aks ettiradi.
+        """
+        if not promoter_ids:
+            return {}
+        stmt = self._active_only(select(
+            Order.promoter_id,
+            func.count(Order.id).label("orders"),
+            func.coalesce(func.sum(Order.promoter_bonus_amount), 0).label("bonus"),
+        ).where(
+            Order.promoter_id.in_(list(promoter_ids)),
+            Order.status == OrderStatus.DELIVERED,
+        ))
+        if since is not None:
+            stmt = stmt.where(Order.delivered_at >= since)
+        stmt = stmt.group_by(Order.promoter_id)
+        res = await self._session.execute(stmt)
+        return {
+            int(r[0]): (int(r[1] or 0), Decimal(str(r[2] or 0)))
+            for r in res.all()
         }
 
     # ---------------------- Soft delete admin helpers ----------------------

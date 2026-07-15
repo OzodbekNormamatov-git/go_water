@@ -49,6 +49,21 @@ class RemindersSettingsIn(BaseModel):
     reminder_lead_days: Optional[int] = Field(default=None, ge=0, le=30)
 
 
+class PromoterSettingsOut(BaseModel):
+    promoter_program_enabled: bool
+    promoter_bonus_per_order: Decimal
+    promoter_bonus_window_days: int
+
+
+class PromoterSettingsIn(BaseModel):
+    promoter_program_enabled: Optional[bool] = None
+    # Har YETKAZILGAN zakaz uchun promouterga yoziladigan summa (so'm).
+    # Yuqori chegara service'da (MAX_PROMOTER_BONUS_PER_ORDER).
+    promoter_bonus_per_order: Optional[Decimal] = Field(default=None, ge=0)
+    # Kod kiritilgandan keyin bonus necha kun davom etadi.
+    promoter_bonus_window_days: Optional[int] = Field(default=None, ge=1, le=3650)
+
+
 class CashbackOverviewOut(BaseModel):
     """Cashback dasturining moliyaviy ko'rinishi."""
     config_enabled: bool
@@ -128,6 +143,47 @@ async def update_reminders(
         raise HTTPException(status_code=400, detail=str(e))
     return RemindersSettingsOut(
         reminders_enabled=cfg.enabled, reminder_lead_days=cfg.lead_days,
+    )
+
+
+@router.get("/promoter", response_model=PromoterSettingsOut)
+async def get_promoter_settings(
+    _=Depends(admin_required),
+    settings: SettingsService = Depends(get_settings_service),
+) -> PromoterSettingsOut:
+    cfg = await settings.get_promoter_config()
+    return PromoterSettingsOut(
+        promoter_program_enabled=cfg.enabled,
+        promoter_bonus_per_order=cfg.bonus_per_order,
+        promoter_bonus_window_days=cfg.bonus_window_days,
+    )
+
+
+@router.patch("/promoter", response_model=PromoterSettingsOut)
+async def update_promoter_settings(
+    payload: PromoterSettingsIn,
+    _=Depends(admin_required),
+    settings: SettingsService = Depends(get_settings_service),
+) -> PromoterSettingsOut:
+    """Promouter dasturi sozlamasi.
+
+    ORQAGA QARAB ta'sir qilmaydi: bonus summasi har zakazga yaratilganda,
+    davr esa kod kiritilganda muhrlanadi — o'tmish hisobotlari o'zgarmaydi.
+    """
+    try:
+        cfg = await settings.update_promoter(
+            enabled=payload.promoter_program_enabled,
+            bonus_per_order=payload.promoter_bonus_per_order,
+            bonus_window_days=payload.promoter_bonus_window_days,
+        )
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except DomainError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return PromoterSettingsOut(
+        promoter_program_enabled=cfg.enabled,
+        promoter_bonus_per_order=cfg.bonus_per_order,
+        promoter_bonus_window_days=cfg.bonus_window_days,
     )
 
 

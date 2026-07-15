@@ -40,6 +40,7 @@ from Service.geocode_service import GeocodeService
 from Service.ledger_service import LedgerService
 from Service.notification_service import NotificationService
 from Service.operator_service import OperatorService
+from Service.promoter_service import PromoterService
 from Service.order_service import OrderService
 from Service.reminder_service import ReminderService
 from Service.settings_service import SettingsService
@@ -95,6 +96,9 @@ async def _run() -> None:
     # noaktiv qator → admin panel "Operatorlar"dan aktivlashtiradi.
     # .env seed YO'Q — eski OPERATOR_TELEGRAM_IDS butunlay bekor qilingan.
     operator_service = OperatorService(db.session_factory)
+    # Promouterlar (uyma-uy ishchilar) — faqat DB'da; admin panelidan yaratiladi.
+    # Bot/login yo'q: ishchi tizimga kirmaydi, u faqat promokod egasi.
+    promoter_service = PromoterService(db.session_factory)
     food_service = FoodService(db.session_factory)
     order_service = OrderService(db.session_factory)
     cart_service = CartService(db.session_factory)
@@ -201,6 +205,7 @@ async def _run() -> None:
 
     # FastAPI Mini App
     container = AppContainer(
+        promoter_service=promoter_service,
         user_service=user_service,
         food_service=food_service,
         order_service=order_service,
