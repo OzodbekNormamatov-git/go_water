@@ -86,6 +86,71 @@ export async function renderSettings(root) {
       </div>
     </div>
 
+    <div class="charts-grid" style="grid-template-columns: 1fr">
+      <div class="card">
+        <h3 class="card__title">🚶 Promouterlar (uyma-uy ishchilar)</h3>
+        <p class="muted" style="font-size:12px;margin-bottom:8px">
+          Ishchilar mijozlarga borib botni tushuntiradi va manzil saqlashga o'rgatadi,
+          so'ng mijozning telefonida o'z promokodini kiritadi. Keyingi zakazlar o'sha
+          ishchiga yozilib, bonus hisoblanadi. Ishchilar «Promouterlar» bo'limida.
+        </p>
+        <form id="promForm">
+          <div class="settings-row">
+            <div class="settings-row__label">
+              <div class="settings-row__title">Promokod dasturi yoqilgan</div>
+              <div class="settings-row__hint">
+                O'chirilsa: yangi kodlar qabul qilinmaydi va yangi zakazlarga bonus
+                yozilmaydi. Mavjud bog'lanishlar va o'tmish hisoboti saqlanadi.
+              </div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="prom-enabled" />
+              <span class="switch__slider"></span>
+            </label>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row__label">
+              <div class="settings-row__title">Har zakaz uchun bonus</div>
+              <div class="settings-row__hint">
+                Bonus davri ichidagi har bir <b>yetkazilgan</b> zakaz uchun ishchiga
+                yoziladigan summa. <b>0</b> = bonus yozilmaydi (faqat statistika yig'iladi).
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input class="input" id="prom-bonus" type="number" min="0" step="500" style="max-width:140px" />
+              <span class="muted">so'm</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row__label">
+              <div class="settings-row__title">Bonus davri</div>
+              <div class="settings-row__hint">
+                Mijoz kod kiritganidan keyin necha kun davomida uning zakazlari
+                ishchiga bonus keltiradi. Davr tugagach, mijoz baribir ishchiga
+                <b>biriktirilgan bo'lib qoladi</b> (statistika uchun) — faqat bonus to'xtaydi.
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input class="input" id="prom-window" type="number" min="1" max="3650" step="1" style="max-width:120px" />
+              <span class="muted">kun</span>
+            </div>
+          </div>
+
+          <p class="muted" style="font-size:12px;margin-top:10px">
+            ℹ️ Bu yerdagi o'zgarish <b>orqaga qarab ta'sir qilmaydi</b>: bonus summasi har
+            zakazga yaratilganda, davr esa kod kiritilganda muhrlanadi — o'tgan oylarning
+            hisoboti o'zgarmaydi.
+          </p>
+
+          <div style="text-align:right;margin-top:12px">
+            <button class="btn" id="savePromBtn" type="button">Saqlash</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <div class="charts-grid" style="grid-template-columns: 1fr 1fr">
       <div class="card">
         <h3 class="card__title">Tarixiy keshbek aylanmasi</h3>
@@ -101,10 +166,10 @@ export async function renderSettings(root) {
   await reload();
 
   async function reload() {
-    let cfg, overview, rem;
+    let cfg, overview, rem, prom;
     try {
-      [cfg, overview, rem] = await Promise.all([
-        api.settings(), api.cashbackOverview(), api.reminders(),
+      [cfg, overview, rem, prom] = await Promise.all([
+        api.settings(), api.cashbackOverview(), api.reminders(), api.promoterSettings(),
       ]);
     } catch (e) {
       toast(e.message || "Yuklab bo'lmadi", "error");
@@ -119,6 +184,11 @@ export async function renderSettings(root) {
     // Avto-eslatma form
     root.querySelector("#rem-enabled").checked = !!rem.reminders_enabled;
     root.querySelector("#rem-lead").value = Number(rem.reminder_lead_days);
+
+    // Promouter form
+    root.querySelector("#prom-enabled").checked = !!prom.promoter_program_enabled;
+    root.querySelector("#prom-bonus").value = Number(prom.promoter_bonus_per_order);
+    root.querySelector("#prom-window").value = Number(prom.promoter_bonus_window_days);
 
     // KPIs — moliyaviy ko'rinish
     root.querySelector("#cashbackKpis").innerHTML = `
@@ -221,6 +291,31 @@ export async function renderSettings(root) {
     try {
       await api.updateReminders({ reminders_enabled: enabled, reminder_lead_days: lead });
       toast("Avto-eslatma sozlamasi saqlandi", "success");
+      await reload();
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Xatolik";
+      toast(msg, "error");
+    }
+  });
+
+  root.querySelector("#savePromBtn").addEventListener("click", async (e) => {
+    e.preventDefault();
+    const enabled = root.querySelector("#prom-enabled").checked;
+    const bonus = Number(root.querySelector("#prom-bonus").value);
+    const days = Math.floor(Number(root.querySelector("#prom-window").value));
+    if (!Number.isFinite(bonus) || bonus < 0) {
+      return toast("Bonus summasi manfiy bo'la olmaydi", "error");
+    }
+    if (!Number.isFinite(days) || days < 1 || days > 3650) {
+      return toast("Bonus davri 1..3650 kun oralig'ida bo'lishi shart", "error");
+    }
+    try {
+      await api.updatePromoterSettings({
+        promoter_program_enabled: enabled,
+        promoter_bonus_per_order: bonus,
+        promoter_bonus_window_days: days,
+      });
+      toast("Promouter sozlamasi saqlandi", "success");
       await reload();
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : "Xatolik";

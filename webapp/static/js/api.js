@@ -142,6 +142,12 @@ export const api = {
     invalidate("addresses");
     return r;
   },
+
+  // ----- Promokod (uyma-uy ishchisi mijozning telefonida kiritadi) -----
+  // Keshlanmaydi: holat manzil qo'shilishi/zakaz berilishi bilan darhol
+  // o'zgaradi — eskirgan javob ishchini chalg'itardi.
+  promoStatus: () => request("/api/me/promo"),
+  redeemPromo: (code) => request("/api/me/promo", { method: "POST", body: { code } }),
 };
 
 export { invalidate as invalidateCache };

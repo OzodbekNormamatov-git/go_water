@@ -16,6 +16,7 @@ import { renderBroadcasts } from "./views/broadcasts.js";
 import { renderSettings } from "./views/settings.js";
 import { renderOperatorOrder } from "./views/operator_order.js";
 import { renderOperators } from "./views/operators.js";
+import { renderPromoters } from "./views/promoters.js";
 import { renderReorder } from "./views/reorder.js";
 
 register("dashboard", renderDashboard, { title: "Dashboard" });
@@ -25,6 +26,7 @@ register("order",     renderOrderDetail, { title: "Buyurtma" });
 register("products",  renderProducts,  { title: "Mahsulotlar" });
 register("couriers",  renderCouriers,  { title: "Kuryerlar" });
 register("operators", renderOperators, { title: "Operatorlar" });
+register("promoters", renderPromoters, { title: "Promouterlar" });
 register("customers", renderCustomers, { title: "Mijozlar" });
 register("finance",   renderFinance,   { title: "Moliyaviy hisobot" });
 register("activity",  renderActivity,  { title: "Mijozlar faolligi" });

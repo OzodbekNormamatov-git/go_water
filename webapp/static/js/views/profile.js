@@ -68,6 +68,11 @@ function renderHero(me) {
       <div class="tile__chev">›</div>
     </div>
 
+    <!-- Promokod — holatga qarab to'ldiriladi (loadPromo). Bo'sh qolishi ham
+         normal: mos kelmasa (masalan, mijoz allaqachon zakaz bergan) umuman
+         ko'rsatilmaydi. -->
+    <div id="promo-slot"></div>
+
     <div class="section-title">Ma'lumotlarim</div>
     <div class="list-item">
       <span class="list-item__label">Ism</span>
@@ -98,6 +103,7 @@ export function renderProfile(root) {
   root.innerHTML = renderHero(cached);
   attachHandlers(root);
   loadStats(root);
+  loadPromo(root);
 
   // Background: fresh fetch — keshni invalidate qilib, /api/me ni qaytadan tortadi.
   // Bu admin balansni o'zgartirgan vaqtda mijoz Profil bosishi bilan yangilanadi.
@@ -129,6 +135,109 @@ function attachHandlers(root) {
   if (goAddrEl) goAddrEl.addEventListener("click", () => go("addresses"));
   const editBtn = root.querySelector("#editBtn");
   if (editBtn) editBtn.addEventListener("click", () => openEdit(root));
+}
+
+// ---------------------- Promokod ----------------------
+// Uyma-uy yuruvchi ishchi mijoznikiga boradi, botni tushuntiradi, manzil
+// saqlashga o'rgatadi va MIJOZNING TELEFONIDA, uning ruxsati bilan, o'z kodini
+// shu yerda kiritadi.
+//
+// Bo'lim FAQAT kerak bo'lganda ko'rinadi (serverdagi eligibility asosida):
+//   * eligible              → kod kiritish formasi
+//   * manzil yo'q           → "avval manzil saqlang" yo'riqnomasi (ishchiga
+//                             keyingi qadamni aytadi — bu oqimning maqsadi)
+//   * allaqachon kiritilgan → tasdiq (kod ko'rinadi)
+//   * zakaz bergan / dastur o'chirilgan → umuman ko'rsatilmaydi (chalg'itmasin)
+//
+// Serverdagi qoidalar bu yerda TAKRORLANMAYDI — yakuniy qaror doim POST'da.
+
+function promoSection(inner) {
+  return `<div class="section-title">Promokod</div>${inner}`;
+}
+
+async function loadPromo(root) {
+  const slot = root.querySelector("#promo-slot");
+  if (!slot) return;
+  let st;
+  try {
+    st = await api.promoStatus();
+  } catch (_) {
+    return;  // Silent: promokod ikkinchi darajali, profil baribir ishlayveradi.
+  }
+  if (!slot.isConnected) return;
+
+  if (!st.program_enabled || st.has_orders) {
+    slot.innerHTML = "";
+    return;
+  }
+
+  if (st.already_redeemed) {
+    slot.innerHTML = promoSection(`
+      <div class="list-item">
+        <span class="list-item__label">✅ Faollashtirilgan</span>
+        <span class="list-item__value"><code>${escapeHtml(st.redeemed_code)}</code></span>
+      </div>
+    `);
+    return;
+  }
+
+  if (!st.has_address) {
+    slot.innerHTML = promoSection(`
+      <div class="tile" id="promoGoAddr">
+        <div class="tile__icon">🎁</div>
+        <div class="tile__main">
+          <div class="tile__title">Avval manzilingizni saqlang</div>
+          <div class="tile__sub">Manzil saqlanganidan keyin promokod kiritish mumkin bo'ladi</div>
+        </div>
+        <div class="tile__chev">›</div>
+      </div>
+    `);
+    const el = slot.querySelector("#promoGoAddr");
+    if (el) el.addEventListener("click", () => go("addresses"));
+    return;
+  }
+
+  // Eligible — kod kiritish formasi.
+  slot.innerHTML = promoSection(`
+    <div class="card" style="padding:12px">
+      <div class="muted" style="font-size:13px;margin-bottom:8px">
+        Sizga xizmat ko'rsatgan xodimning promokodi bo'lsa, shu yerga kiriting.
+      </div>
+      <div style="display:flex;gap:8px">
+        <input class="input" id="promoInput" placeholder="Promokod"
+               autocomplete="off" autocapitalize="characters" maxlength="16"
+               style="text-transform:uppercase;letter-spacing:1px;flex:1" />
+        <button class="btn" id="promoBtn" type="button">Faollashtirish</button>
+      </div>
+      <div id="promoErr" class="muted" style="font-size:12px;margin-top:6px;color:var(--danger,#d93025)"></div>
+    </div>
+  `);
+
+  const input = slot.querySelector("#promoInput");
+  const btn = slot.querySelector("#promoBtn");
+  const err = slot.querySelector("#promoErr");
+
+  async function submit() {
+    const code = (input.value || "").trim();
+    if (!code) return;
+    err.textContent = "";
+    btn.disabled = true;
+    input.disabled = true;
+    try {
+      const r = await api.redeemPromo(code);
+      hapticImpact("medium");
+      toast(`Promokod faollashtirildi: ${r.promo_code}`, "success");
+      loadPromo(root);  // qayta yuklash → "faollashtirilgan" ko'rinishi
+    } catch (e) {
+      // Xato matni serverdan (o'zbekcha, i18n) — bu yerda takrorlamaymiz.
+      err.textContent = e instanceof ApiError ? e.message : "Xatolik yuz berdi.";
+      btn.disabled = false;
+      input.disabled = false;
+    }
+  }
+
+  btn.addEventListener("click", submit);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
 }
 
 async function loadStats(root) {

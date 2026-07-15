@@ -220,6 +220,32 @@ export const api = {
   },
   // body: { is_active?: boolean, phone_number?: string }
   updateOperator:  (id, body) => request(`/api/admin/operators/${id}`, { method: "PATCH", body }),
+
+  // Promouterlar — uyma-uy yuruvchi ishchilar (promokod egalari).
+  // Operatorlardan farqli: bot/login yo'q, admin o'zi yaratadi. Arxivlash BOR
+  // (ishdan ketgan ishchi) — qatori qoladi, tarixiy KPI ko'rinaveradi.
+  promoters: ({ limit, offset, archived } = {}) => {
+    const sp = new URLSearchParams();
+    if (limit  != null) sp.set("limit",  String(limit));
+    if (offset != null) sp.set("offset", String(offset));
+    if (archived) sp.set("include_archived", "true");
+    return request(`/api/admin/promoters${sp.toString() ? "?" + sp : ""}`);
+  },
+  // body: { full_name, phone_number?, promo_code? } — kod bo'sh bo'lsa avto-generatsiya
+  createPromoter:  (body) => request("/api/admin/promoters", { method: "POST", body }),
+  // body: { full_name?, phone_number?, is_active? } — promo_code YO'Q (o'zgarmas)
+  updatePromoter:  (id, body) => request(`/api/admin/promoters/${id}`, { method: "PATCH", body }),
+  archivePromoter: (id) => request(`/api/admin/promoters/${id}`, { method: "DELETE" }),
+  restorePromoter: (id) => request(`/api/admin/promoters/${id}/restore`, { method: "POST" }),
+  promoterCustomers: (id, { limit, offset } = {}) => {
+    const sp = new URLSearchParams();
+    if (limit  != null) sp.set("limit",  String(limit));
+    if (offset != null) sp.set("offset", String(offset));
+    return request(`/api/admin/promoters/${id}/customers${sp.toString() ? "?" + sp : ""}`);
+  },
+  promoterSettings:       () => request("/api/admin/settings/promoter"),
+  updatePromoterSettings: (body) =>
+    request("/api/admin/settings/promoter", { method: "PATCH", body }),
 };
 
 export const isTelegram = !!tg;
