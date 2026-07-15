@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#FFFFFF" />
+  <title>Kuryer</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    /* ===================================================================
+       Kuryer Mini App — mijoz/admin bilan BIR XIL dizayn tizimi.
+
+       Dizayn tizimi: 4 funksional rang + neutral grey scale.
+         #0088CC  Brand blue    — asosiy harakat, link, aktiv oqim
+         #003F7F  Brand deep    — summa/KPI aksent
+         #27AE60  Success green — "Yetkazildi" CTA
+         #E74C3C  Danger red    — xato, diqqat badge
+         #F39C12  Warning amber — NEW buyurtma
+       ================================================================== */
+    :root {
+      /* ---------- Brand palette (mijoz/admin bilan bir xil) ---------- */
+      --brand-primary:        #0088CC;
+      --brand-primary-hover:  #006BA1;
+      --brand-deep:           #003F7F;
+      --brand-tint:           #E3F2FD;
+      --brand-success:        #27AE60;
+      --brand-success-hover:  #1E8449;
+      --brand-danger:         #E74C3C;
+      --brand-danger-hover:   #C0392B;
+      --brand-warning:        #F39C12;
+      --brand-warning-strong: #C77800;
+
+      /* Pill bg tint'lari (alpha) — yagona tizim */
+      --pill-bg-brand:    rgba(0, 136, 204, 0.14);
+      --pill-bg-success:  rgba(39, 174, 96, 0.14);
+      --pill-bg-danger:   rgba(231, 76, 60, 0.14);
+      --pill-bg-warning:  rgba(243, 156, 18, 0.16);
+
+      /* ---------- Surface tokens ---------- */
+      --bg-tint:      #F4F8FB;
+      --surface:      #FFFFFF;
+      --surface-2:    #F8FAFC;
+      --surface-3:    #EEF4F9;
+      --border:       #E2E8F0;
+      --divider:      #EAEFF4;
+      --text:         #0F172A;
+      --text-2:       #1E293B;
+      --text-muted:   #64748B;
+      --text-on-brand: #FFFFFF;
+
+      --shadow-sm:      0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md:      0 4px 12px rgba(15, 23, 42, 0.06);
+      --shadow-lg:      0 10px 24px -8px rgba(15, 23, 42, 0.12);
+      --shadow-success: 0 10px 24px -8px rgba(39, 174, 96, 0.35);
+
+      --radius-sm: 10px;
+      --radius-md: 14px;
+      --radius-lg: 18px;
+
+      /* app.js inline style'lari ishlatadigan aliaslar — JS'ga tegilmaydi. */
+      --brand: var(--brand-primary);
+      --danger: var(--brand-danger);
+      --danger-tint: #FDECEA;
+      --danger-border: #F5B7B1;
+      --warning-tint: #FEF9E7;
+      --warning-border: #F8C471;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    /* [hidden] atributi author-CSS display'idan ustun bo'lsin — aks holda
+       .badge { display:inline-block } uni bekor qilib, "0" badge doim ko'rinardi. */
+    [hidden] { display: none !important; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.45;
+      background: var(--bg-tint);
+      color: var(--text);
+      padding-bottom: env(safe-area-inset-bottom);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior: none;
+      text-rendering: optimizeLegibility;
+    }
+    button { font-family: inherit; cursor: pointer; }
+    a { color: var(--brand-primary); text-decoration: none; }
+
+    /* ---------------------- Tabs (sticky top) ---------------------- */
+
+    #tabs {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid var(--divider);
+      padding-top: env(safe-area-inset-top);
+      box-shadow: var(--shadow-sm);
+    }
+    #tabs button {
+      flex: 1;
+      border: 0;
+      background: none;
+      padding: 13px 4px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    #tabs button:active { transform: scale(0.97); }
+    #tabs button.active {
+      color: var(--brand-primary);
+      border-bottom-color: var(--brand-primary);
+    }
+    #tabs .badge {
+      display: inline-block;
+      min-width: 18px;
+      padding: 1px 6px;
+      margin-left: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.4;
+      background: var(--brand-danger);
+      color: #fff;
+      border-radius: 999px;
+    }
+
+    /* ---------------------- Screen ---------------------- */
+
+    #screen { padding: 16px; }
+
+    /* ---------------------- Card ---------------------- */
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .row { display: flex; align-items: center; gap: 8px; }
+    .muted { color: var(--text-muted); font-size: 13px; }
+    .num { font-weight: 800; color: var(--brand-deep); letter-spacing: -0.01em; }
+    .total { font-weight: 800; font-size: 17px; color: var(--brand-deep); letter-spacing: -0.01em; }
+    .items { font-size: 13px; color: var(--text-2); margin: 6px 0; }
+    .addr { font-size: 14px; margin: 4px 0; color: var(--text); }
+
+    /* ---------------------- Buttons ---------------------- */
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      border: 0;
+      border-radius: var(--radius-md);
+      padding: 13px 16px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      margin-top: 10px;
+      background: var(--brand-primary);
+      color: var(--text-on-brand);
+      transition: transform 0.06s, opacity 0.2s, background 0.15s;
+    }
+    .btn:disabled { opacity: 0.5; pointer-events: none; }
+    .btn:active { transform: scale(0.985); }
+
+    .btn--claim { background: var(--brand-primary); }
+    .btn--claim:active { background: var(--brand-primary-hover); }
+    .btn--go { background: var(--brand-primary); }
+    .btn--go:active { background: var(--brand-primary-hover); }
+    .btn--ok { background: var(--brand-success); box-shadow: var(--shadow-success); }
+    .btn--ok:active { background: var(--brand-success-hover); }
+    .btn--ghost {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn--ghost:active { background: var(--surface-3); }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--brand-primary);
+      outline-offset: 2px;
+    }
+
+    /* ---------------------- Status pills ----------------------
+       Mijoz/admin bilan bir xil semantika:
+         NEW (mavjud buyurtma) → warning amber — diqqat tortish
+         AKTIV (menikim)       → brand blue    — aktiv oqim
+    */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .pill--new { background: var(--pill-bg-warning); color: var(--brand-warning-strong); }
+    .pill--act { background: var(--pill-bg-brand);   color: var(--brand-primary); }
+
+    /* ---------------------- Links (tel / xarita) ---------------------- */
+
+    a.tel { color: var(--brand-primary); font-weight: 600; text-decoration: none; }
+    a.tel:active { opacity: 0.7; }
+
+    /* ---------------------- Stepper ---------------------- */
+
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      justify-content: center;
+      margin: 10px 0;
+    }
+    .stepper button {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--brand-primary);
+      font-size: 22px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.1s, transform 0.06s;
+    }
+    .stepper button:active { transform: scale(0.92); background: var(--brand-tint); }
+    .stepper .val {
+      font-size: 20px;
+      font-weight: 800;
+      min-width: 40px;
+      text-align: center;
+      color: var(--text);
+    }
+
+    /* ---------------------- To'lov usuli (paybtn) ----------------------
+       app.js paintPay() inline style beradi — bu yerda faqat bazaviy
+       ko'rinish (inline kelguncha) va inline o'rnatmaydigan xossalar. */
+    .paybtn {
+      flex: 1;
+      max-width: 130px;
+      padding: 9px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      transition: background 0.12s, color 0.12s;
+    }
+
+    /* ---------------------- Empty state ---------------------- */
+
+    .empty {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 48px 16px;
+      font-size: 15px;
+    }
+    .empty__icon { font-size: 44px; margin-bottom: 10px; opacity: 0.6; }
+
+    /* ---------------------- Toast ---------------------- */
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(20px);
+      max-width: calc(100% - 32px);
+      background: var(--text);
+      color: #fff;
+      padding: 11px 18px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 500;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 50;
+      box-shadow: var(--shadow-lg);
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.err { background: var(--brand-danger); }
+  </style>
+</head>
+<body>
+  <div id="tabs">
+    <button data-tab="available" class="active">📋 Mavjud <span class="badge" id="availBadge" hidden>0</span></button>
+    <button data-tab="active">🚚 Menikim</button>
+    <button data-tab="stats">📊 Statistika</button>
+  </div>
+  <div id="screen"><div class="empty"><div class="empty__icon">⏳</div>Yuklanmoqda…</div></div>
+  <div id="toast"></div>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

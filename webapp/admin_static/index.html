@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#003F7F" />
+  <title>Admin paneli</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="/admin/css/admin.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- Mobile sidebar backdrop — sidebar ochilganda paydo bo'ladi, bosish bilan yopiladi -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand__logo">💧</div>
+        <div class="brand__name" id="brand-name">Admin</div>
+      </div>
+      <nav class="nav" id="nav">
+        <a class="nav__item" data-route="operator_new_order" data-label="Yangi buyurtma">
+          <span class="nav__icon">📞</span><span class="label-text">Yangi buyurtma</span>
+        </a>
+        <a class="nav__item" data-route="dashboard" data-label="Dashboard">
+          <span class="nav__icon">📊</span><span class="label-text">Dashboard</span>
+        </a>
+        <a class="nav__item" data-route="orders" data-label="Buyurtmalar">
+          <span class="nav__icon">📦</span><span class="label-text">Buyurtmalar</span>
+        </a>
+        <a class="nav__item" data-route="reorder" data-label="Aqlli eslatma">
+          <span class="nav__icon">🔔</span><span class="label-text">Aqlli eslatma</span>
+        </a>
+        <a class="nav__item" data-route="finance" data-label="Moliya">
+          <span class="nav__icon">💰</span><span class="label-text">Moliya</span>
+        </a>
+        <a class="nav__item" data-route="activity" data-label="Mijozlar faolligi">
+          <span class="nav__icon">📈</span><span class="label-text">Faollik</span>
+        </a>
+        <a class="nav__item" data-route="broadcasts" data-label="Rassilka">
+          <span class="nav__icon">📣</span><span class="label-text">Rassilka</span>
+        </a>
+        <a class="nav__item" data-route="products" data-label="Mahsulotlar">
+          <span class="nav__icon">💧</span><span class="label-text">Mahsulotlar</span>
+        </a>
+        <a class="nav__item" data-route="couriers" data-label="Kuryerlar">
+          <span class="nav__icon">🚗</span><span class="label-text">Kuryerlar</span>
+        </a>
+        <a class="nav__item" data-route="operators" data-label="Operatorlar">
+          <span class="nav__icon">📞</span><span class="label-text">Operatorlar</span>
+        </a>
+        <a class="nav__item" data-route="customers" data-label="Mijozlar">
+          <span class="nav__icon">👤</span><span class="label-text">Mijozlar</span>
+        </a>
+        <a class="nav__item" data-route="settings" data-label="Sozlamalar">
+          <span class="nav__icon">⚙️</span><span class="label-text">Sozlamalar</span>
+        </a>
+      </nav>
+      <div class="sidebar__foot">
+        <div id="user-info" class="muted" style="font-size:12px;padding:0 4px 8px;text-align:center"></div>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <button class="hamburger" id="hamburger" type="button" aria-label="Menu">☰</button>
+        <h1 class="topbar__title" id="page-title">Dashboard</h1>
+      </header>
+      <div id="screen" class="screen" aria-live="polite"></div>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/admin/js/main.js"></script>
+</body>
+</html>

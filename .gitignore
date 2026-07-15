@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+.claude/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Bot media (lokal saqlangan mahsulot rasmlari — har deploy o'ziniki)
+media/
+
+# Logs
+*.log
+
+# Vaqtinchalik / smoke fayllar (commit qilinmasin)
+.tmp_*
+*_smoke.py
+
+# OS / archive
+.DS_Store
+Thumbs.db
