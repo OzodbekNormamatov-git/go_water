@@ -9,5 +9,7 @@ uvicorn[standard]==0.32.1
 slowapi==0.1.9
 alembic==1.13.3
 tzdata==2024.2
+# Excel (.xlsx) hisobot eksporti — admin panel "Excel hisobot" tugmasi
+XlsxWriter==3.2.9
 # Broadcast'larda rasm yuklash uchun (multipart/form-data parser)
 python-multipart==0.0.20

@@ -64,6 +64,12 @@ export const api = {
   // Mijozlar faolligi + pik vaqtlar
   activity: (days = 30) => request(`/api/admin/activity?days=${days}`),
 
+  // Excel hisobot — sana oralig'i bo'yicha .xlsx quriladi va so'ragan
+  // adminning o'ziga admin bot orqali hujjat sifatida yuboriladi.
+  // body: { date_from: "YYYY-MM-DD", date_to: "YYYY-MM-DD" }
+  exportExcelReport: (body) =>
+    request("/api/admin/reports/excel", { method: "POST", body }),
+
   // Tizim sozlamalari (cashback toggle/percent)
   settings:          () => request("/api/admin/settings"),
   updateSettings:    (body) => request("/api/admin/settings", { method: "PATCH", body }),

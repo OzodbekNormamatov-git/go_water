@@ -195,6 +195,26 @@ export async function renderFinance(root, params) {
       </div>
     </div>
 
+    <div class="section-title">📊 Excel hisobot</div>
+    <div class="card" style="margin-bottom:var(--gap)">
+      <div class="muted" style="font-size:13px">
+        Tanlangan davr bo'yicha to'liq hisobot (buyurtmalar, mijozlar, barcha
+        moliyaviy operatsiyalar, rasxodlar, xulosa) .xlsx faylda <b>admin botga</b>
+        yuboriladi — u yerdan kompyuterga saqlab olasiz.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:12px">
+        <div>
+          <label class="label">Boshlanish</label>
+          <input type="date" class="input" id="repFrom" style="width:160px" />
+        </div>
+        <div>
+          <label class="label">Tugash</label>
+          <input type="date" class="input" id="repTo" style="width:160px" />
+        </div>
+        <button class="btn" id="repBtn" type="button">📥 Botga yuborish</button>
+      </div>
+    </div>
+
     <div class="section-title">💸 Rasxodlar</div>
     <div class="toolbar" style="flex-wrap:wrap;gap:10px">
       <div class="seg" id="expSeg">
@@ -212,6 +232,61 @@ export async function renderFinance(root, params) {
     <div id="expBody"></div>
     <div id="expMore" style="margin-top:12px;text-align:center"></div>
   `;
+
+  // ---- Excel hisobot: default davr = joriy oy boshi .. bugun ----
+  const _isoDate = (d) => {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+  const repFrom = root.querySelector("#repFrom");
+  const repTo = root.querySelector("#repTo");
+  const repBtn = root.querySelector("#repBtn");
+  repFrom.value = _isoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+  repTo.value = _isoDate(now);
+  let repBusy = false;
+  repBtn.addEventListener("click", async () => {
+    if (repBusy) return;
+    if (!repFrom.value || !repTo.value) {
+      toast("Ikkala sanani ham tanlang", "error");
+      return;
+    }
+    // type=date qo'llamaydigan eski WebView'da input oddiy matn bo'lib qoladi —
+    // ISO formatni o'zimiz tekshiramiz (aks holda backend 422 inglizcha qaytaradi).
+    const ISO = /^\d{4}-\d{2}-\d{2}$/;
+    if (!ISO.test(repFrom.value) || !ISO.test(repTo.value)) {
+      toast("Sana formati noto'g'ri (YYYY-MM-DD bo'lishi kerak)", "error");
+      return;
+    }
+    if (repFrom.value > repTo.value) {
+      toast("Boshlanish sanasi tugash sanasidan keyin bo'lmasin", "error");
+      return;
+    }
+    repBusy = true;
+    const oldText = repBtn.textContent;
+    repBtn.disabled = true;
+    repBtn.textContent = "⏳ Tayyorlanmoqda…";
+    try {
+      const res = await api.exportExcelReport({
+        date_from: repFrom.value,
+        date_to: repTo.value,
+      });
+      if (res.sent) {
+        toast(
+          `Hisobot botga yuborildi (${fmtCount(res.orders)} buyurtma, ` +
+          `${fmtCount(res.entries)} operatsiya, ${fmtCount(res.size_kb)} KB)`,
+          "success",
+        );
+      } else {
+        toast(res.error || "Fayl botga yuborilmadi", "error");
+      }
+    } catch (e) {
+      toast(e.message, "error");
+    } finally {
+      repBusy = false;
+      repBtn.disabled = false;
+      repBtn.textContent = oldText;
+    }
+  });
 
   const yearSel = root.querySelector("#yearSel");
   const monthSel = root.querySelector("#monthSel");

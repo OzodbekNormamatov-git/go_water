@@ -35,6 +35,7 @@ from webapp.admin import routes_finance as admin_finance_routes
 from webapp.admin import routes_operator as admin_operator_routes
 from webapp.admin import routes_promoters as admin_promoters_routes
 from webapp.admin import routes_reorder as admin_reorder_routes
+from webapp.admin import routes_reports as admin_reports_routes
 from webapp.admin import routes_resources as admin_resources
 from webapp.admin import routes_settings as admin_settings_routes
 from webapp.admin import routes_stats as admin_stats_routes
@@ -253,6 +254,7 @@ def create_app(*, container: AppContainer, cors_origins: List[str]) -> FastAPI:
     app.include_router(admin_finance_routes.activity_router)
     app.include_router(admin_expenses_routes.router)
     app.include_router(admin_reorder_routes.router)
+    app.include_router(admin_reports_routes.router)
     app.include_router(admin_settings_routes.router)
     app.include_router(admin_broadcasts_routes.router)
     app.include_router(admin_operator_routes.router)

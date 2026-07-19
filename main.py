@@ -43,6 +43,7 @@ from Service.operator_service import OperatorService
 from Service.promoter_service import PromoterService
 from Service.order_service import OrderService
 from Service.reminder_service import ReminderService
+from Service.report_service import ReportService
 from Service.settings_service import SettingsService
 from Service.user_service import UserService
 from config import get_settings
@@ -203,6 +204,12 @@ async def _run() -> None:
         except Exception as e:
             log.warning("Courier bot menu button setup failed: %s", e)
 
+    # Excel hisobot (admin panel tugmasi) — .xlsx qurib admin botga DM qiladi.
+    # expense_service — rasxodlar varag'i + P&L (sof foyda) bloki uchun.
+    report_service = ReportService(
+        db.session_factory, admin_bot=admin_bot, expense_service=expense_service,
+    )
+
     # FastAPI Mini App
     container = AppContainer(
         promoter_service=promoter_service,
@@ -222,6 +229,7 @@ async def _run() -> None:
         expense_service=expense_service,
         lifecycle_service=lifecycle_service,
         operator_service=operator_service,
+        report_service=report_service,
         customer_bot_token=settings.customer_bot_token,
         admin_bot_token=settings.admin_bot_token,
         courier_bot_token=settings.courier_bot_token,
